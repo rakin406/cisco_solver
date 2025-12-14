@@ -12,9 +12,6 @@ MAX_EXAMS = 33
 
 curr_exam = 1
 curr_question = 1
-next_button_pos = None
-submit_button_pos = None
-fullscreen_button_pos = None
 
 
 def get_soup() -> BeautifulSoup:
