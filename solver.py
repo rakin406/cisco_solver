@@ -8,10 +8,10 @@ import requests
 from bs4 import BeautifulSoup
 
 SUBMIT_ASSESSMENT_IMG = "./assets/submit-assessment.png"
+QUESTION_IMG = "./assets/question.png"
 MAX_EXAMS = 33
 
 curr_exam = 1
-curr_question = 1
 
 
 def get_soup() -> BeautifulSoup:
@@ -87,22 +87,28 @@ def click_submit():
 
 
 def get_question() -> str:
-    global curr_question
     question = ""
 
-    pg.hotkey("ctrl", "f")
-    time.sleep(0.5)
-    pg.write(f"Question {curr_question}")
-    curr_question += 1
+    # Click on the question
+    try:
+        question_pos = pyscreeze.locateCenterOnScreen(
+            QUESTION_IMG, grayscale=True, confidence=0.8
+        )
 
-    time.sleep(0.5)
-    pg.press("esc")
-    pg.hotkey("ctrl", "a")
-    pg.hotkey("ctrl", "f")
-    pg.hotkey("ctrl", "c")
-    time.sleep(0.1)
-    pg.press("esc")
-    question = pyperclip.paste()
+        pg.click(question_pos)
+        pg.move(1000, None)
+        pg.hotkey("ctrl", "a")
+        pg.hotkey("ctrl", "f")
+        # Needed because of a bell issue that pauses the program
+        pg.hotkey("ctrl", "f")
+        pg.hotkey("ctrl", "c")
+        time.sleep(0.1)
+        pg.press("esc")
+        question = pyperclip.paste()
+        question = question.removeprefix("Question ")
+        question = question[3:]
+    except pyscreeze.ImageNotFoundException:
+        pass
 
     return question
 
@@ -114,7 +120,7 @@ def search_question() -> Optional[list[str]]:
     while curr_exam <= MAX_EXAMS:
         # Find question
         for i in soup.find_all("strong"):
-            if i.text in question:
+            if question in i.text:
                 # Find answer
                 options = i.parent.find_next_sibling("ul") if i.parent else None
                 answer = (
