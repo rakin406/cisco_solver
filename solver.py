@@ -2,21 +2,19 @@ import time
 from typing import Optional
 
 import pyautogui as pg
+import pyperclip
 import pyscreeze
-import pytesseract
 import requests
 from bs4 import BeautifulSoup
-
-pytesseract.pytesseract.tesseract_cmd = "./binaries/Tesseract-OCR/tesseract.exe"
 
 FULLSCREEN_BUTTON_IMG = "./assets/fullscreen.png"
 # NEXT_BUTTON_IMG = "./assets/next.png"
 SUBMIT_BUTTON_IMG = "./assets/submit.png"
 SUBMIT_ASSESSMENT_IMG = "./assets/submit-assessment.png"
 MAX_EXAMS = 19
-QUESTION_WORDS = ["what", "why", "which", "when", "where", "who", "how"]
 
 curr_exam = 1
+curr_question = 1
 next_button_pos = None
 submit_button_pos = None
 fullscreen_button_pos = None
@@ -105,30 +103,37 @@ def click_fullscreen():
         pg.move(0, 500)
 
 
-def search_question() -> Optional[list[str]]:
-    global curr_exam, soup
-
-    # Parse the question from screenshot
-    question_img = pg.screenshot()
-    text = pytesseract.image_to_string(question_img)
-    text = text.split("\n")
+def get_question() -> str:
+    global curr_question
     question = ""
 
-    # Find question words (what, where etc.) in text
-    for i in text:
-        lower_text = i.lower()
-        for j in QUESTION_WORDS:
-            if j in lower_text:
-                question = lower_text
-                break
+    pg.hotkey("ctrl", "f")
+    time.sleep(0.5)
+    pg.write("?")
+    pg.press("enter", presses=curr_question)
+    curr_question += 1
 
-        if question:
-            break
+    time.sleep(0.5)
+    pg.press("esc")
+    pg.hotkey("shift", "home")
+    pg.hotkey("ctrl", "f")
+    pg.hotkey("ctrl", "c")
+    time.sleep(0.1)
+    pg.press("esc")
+    question = pyperclip.paste()
+    click_fullscreen()
+
+    return question
+
+
+def search_question() -> Optional[list[str]]:
+    global curr_exam, soup
+    question = get_question()
 
     while curr_exam <= MAX_EXAMS:
         # Find question
         for i in soup.find_all("strong"):
-            if question in i.text.lower():
+            if question in i.text:
                 # Find answer
                 options = i.parent.find_next_sibling("ul") if i.parent else None
                 answer = (
