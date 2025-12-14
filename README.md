@@ -75,7 +75,7 @@ the screen or press Ctrl-C in the terminal.
 
 ## Roadmap
 
-- [✅] Add support for checkpoint exams
+- [x] Add support for checkpoint exams
 - [ ] Make a portable executable
 
 <!-- CONTACT -->
