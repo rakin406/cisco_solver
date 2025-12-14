@@ -22,7 +22,7 @@
 
 This program looks at the screen of your browser and scans the questions. It then searches the questions online and finds the relevant answers. The program automatically gives input (clicking, typing etc.) through the use of keyboard and mouse automation.
 
-The program has a few bugs here and there as it is only a prototype. It can only solve module exams (for now). It cannot solve matching questions. The program has an accuracy of approximately 90%, thus I highly suggest you to review the answers from the website <https://itexamanswers.net/>.
+The program has a few bugs as it is only a prototype. It cannot solve matching questions. The program has an accuracy of approximately 90%, thus I highly suggest you to review the answers from the website <https://itexamanswers.net/>.
 
 <!-- GETTING STARTED -->
 
