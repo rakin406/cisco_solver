@@ -1,3 +1,6 @@
+import sys
+import os
+import pathlib
 import time
 from typing import Optional
 
@@ -7,8 +10,17 @@ import pyscreeze
 import requests
 from bs4 import BeautifulSoup
 
-SUBMIT_ASSESSMENT_IMG = "./assets/submit-assessment.png"
-QUESTION_IMG = "./assets/question.png"
+if getattr(sys, "frozen", False):
+    # we are running in a bundle
+    bundle_dir = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+bundle_dir = pathlib.Path(bundle_dir).as_posix()
+
+SUBMIT_ASSESSMENT_IMG = f"{bundle_dir}/assets/submit-assessment.png"
+QUESTION_IMG = f"{bundle_dir}/assets/question.png"
 MAX_EXAMS = 33
 
 curr_exam = 1
