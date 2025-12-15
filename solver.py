@@ -82,10 +82,6 @@ def get_soup() -> BeautifulSoup:
 soup = get_soup()
 
 
-def open_exam():
-    pg.hotkey("alt", "tab")
-
-
 def click_submit():
     """
     Clicks the submit button
@@ -98,8 +94,8 @@ def click_submit():
     pg.press("enter")
 
 
-def get_question() -> str:
-    question = ""
+def get_question() -> Optional[str]:
+    question = None
 
     # Click on the question
     try:
@@ -128,6 +124,10 @@ def get_question() -> str:
 def search_question() -> Optional[list[str]]:
     global curr_exam, soup
     question = get_question()
+
+    # Question wasn't detected on the screen
+    if not question:
+        return None
 
     while curr_exam <= MAX_EXAMS:
         # Find question
@@ -167,7 +167,6 @@ def tick_answer(answer: list[str]):
 
 if __name__ == "__main__":
     solving = True
-    open_exam()
 
     while solving:
         answer = search_question()
