@@ -92,6 +92,7 @@ def click_submit():
     Clicks the submit button
     """
     pg.hotkey("ctrl", "f")
+    pg.press("backspace")
     time.sleep(0.1)
     pg.write("Submit")
     time.sleep(0.1)
@@ -168,8 +169,10 @@ def search_question() -> Optional[list[str]]:
 def tick_answer(answer: list[str]):
     for i in answer:
         pg.hotkey("ctrl", "f")
+        pg.press("backspace")
         pg.write(i)
-        pg.press("enter", presses=2)
+        time.sleep(0.5)
+        pg.hotkey("shift", "enter")
         time.sleep(0.5)
         pg.press("esc")
         pg.press("enter")
