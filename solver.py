@@ -109,12 +109,18 @@ def get_question() -> Optional[str]:
         pg.hotkey("ctrl", "f")
         # Needed because of a bell issue that pauses the program
         pg.hotkey("ctrl", "f")
+
+        # FIX: Cannot copy big text or paragraph
         pg.hotkey("ctrl", "c")
+
         time.sleep(0.1)
         pg.press("esc")
+
         question = pyperclip.paste()
         question = question.removeprefix("Question ")
-        question = question[3:]
+        first_letter_index = question.find(next(filter(str.isalpha, question)))
+        question = question[first_letter_index:]
+        question = " ".join(question.split())  # Remove extra spaces
     except pyscreeze.ImageNotFoundException:
         pass
 
