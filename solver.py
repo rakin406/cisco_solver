@@ -1,3 +1,6 @@
+import sys
+import os
+import pathlib
 import time
 from typing import Optional
 
@@ -7,8 +10,17 @@ import pyscreeze
 import requests
 from bs4 import BeautifulSoup
 
-SUBMIT_ASSESSMENT_IMG = "./assets/submit-assessment.png"
-QUESTION_IMG = "./assets/question.png"
+if getattr(sys, "frozen", False):
+    # we are running in a bundle
+    bundle_dir = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+bundle_dir = pathlib.Path(bundle_dir).as_posix()
+
+SUBMIT_ASSESSMENT_IMG = f"{bundle_dir}/assets/submit-assessment.png"
+QUESTION_IMG = f"{bundle_dir}/assets/question.png"
 MAX_EXAMS = 33
 
 curr_exam = 1
@@ -70,10 +82,6 @@ def get_soup() -> BeautifulSoup:
 soup = get_soup()
 
 
-def open_exam():
-    pg.hotkey("alt", "tab")
-
-
 def click_submit():
     """
     Clicks the submit button
@@ -86,8 +94,8 @@ def click_submit():
     pg.press("enter")
 
 
-def get_question() -> str:
-    question = ""
+def get_question() -> Optional[str]:
+    question = None
 
     # Click on the question
     try:
@@ -101,12 +109,18 @@ def get_question() -> str:
         pg.hotkey("ctrl", "f")
         # Needed because of a bell issue that pauses the program
         pg.hotkey("ctrl", "f")
+
+        # FIX: Cannot copy big text or paragraph
         pg.hotkey("ctrl", "c")
+
         time.sleep(0.1)
         pg.press("esc")
+
         question = pyperclip.paste()
         question = question.removeprefix("Question ")
-        question = question[3:]
+        first_letter_index = question.find(next(filter(str.isalpha, question)))
+        question = question[first_letter_index:]
+        question = " ".join(question.split())  # Remove extra spaces
     except pyscreeze.ImageNotFoundException:
         pass
 
@@ -116,6 +130,10 @@ def get_question() -> str:
 def search_question() -> Optional[list[str]]:
     global curr_exam, soup
     question = get_question()
+
+    # Question wasn't detected on the screen
+    if not question:
+        return None
 
     while curr_exam <= MAX_EXAMS:
         # Find question
@@ -155,7 +173,6 @@ def tick_answer(answer: list[str]):
 
 if __name__ == "__main__":
     solving = True
-    open_exam()
 
     while solving:
         answer = search_question()
