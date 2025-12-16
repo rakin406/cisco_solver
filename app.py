@@ -35,11 +35,16 @@ class MainWindow(QMainWindow):
     def on_button_toggled(self, checked):
         if checked:
             self.button.setText("Stop")
-            thread = threading.Thread(target=self.solver.start)
+            thread = threading.Thread(target=self.start_solver)
             thread.start()
         else:
             self.button.setText("Start")
             self.solver.stop()
+
+    def start_solver(self):
+        self.solver.start()
+        self.button.setChecked(False)
+        self.button.setText("Start")
 
 
 app = QApplication([])
