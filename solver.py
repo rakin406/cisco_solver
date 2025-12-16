@@ -37,23 +37,27 @@ class Solver:
         :param self: self
         """
         self.solving = True
+        self.soup = self.get_new_soup()
 
-        while self.solving:
-            answer = self.search_question()
-            if answer:
-                self.tick_answer(answer)
-                self.click_submit()
+        try:
+            while self.solving:
+                answer = self.search_question()
+                if answer:
+                    self.tick_answer(answer)
+                    self.click_submit()
 
-                # Stop program when "Submit My Assessment" page is reached
-                try:
-                    pyscreeze.locateOnScreen(
-                        self.SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
-                    )
-                    self.solving = False
-                except pyscreeze.ImageNotFoundException:
-                    pass
-            elif not answer and self.curr_exam > self.MAX_EXAMS:
-                self.solving = False
+                    # Stop program when "Submit My Assessment" page is reached
+                    try:
+                        pyscreeze.locateOnScreen(
+                            self.SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
+                        )
+                        self.stop()
+                    except pyscreeze.ImageNotFoundException:
+                        pass
+                elif not answer and self.curr_exam > self.MAX_EXAMS:
+                    self.stop()
+        except pg.FailSafeException:
+            self.stop()
 
     def stop(self):
         """
@@ -63,7 +67,6 @@ class Solver:
         """
         self.solving = False
         self.curr_exam = 1
-        self.soup = self.get_new_soup()
 
     def get_new_soup(self) -> BeautifulSoup:
         url = ""
