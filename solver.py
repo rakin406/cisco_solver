@@ -188,11 +188,13 @@ if __name__ == "__main__":
             tick_answer(answer)
             click_submit()
 
-        # Stop program when "Submit My Assessment" page is reached
-        try:
-            pyscreeze.locateOnScreen(
-                SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
-            )
+            # Stop program when "Submit My Assessment" page is reached
+            try:
+                pyscreeze.locateOnScreen(
+                    SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
+                )
+                solving = False
+            except pyscreeze.ImageNotFoundException:
+                pass
+        elif not answer and curr_exam > MAX_EXAMS:
             solving = False
-        except pyscreeze.ImageNotFoundException:
-            pass
