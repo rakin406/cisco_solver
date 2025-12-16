@@ -10,191 +10,189 @@ import pyscreeze
 import requests
 from bs4 import BeautifulSoup
 
-if getattr(sys, "frozen", False):
-    # we are running in a bundle
-    bundle_dir = sys._MEIPASS
-else:
-    # we are running in a normal Python environment
-    bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
-bundle_dir = pathlib.Path(bundle_dir).as_posix()
+class Solver:
+    def __init__(self):
+        self.curr_exam = 1
+        self.soup = self.get_new_soup()
+        self.MAX_EXAMS = 35
 
-SUBMIT_ASSESSMENT_IMG = f"{bundle_dir}/assets/submit-assessment.png"
-QUESTION_IMG = f"{bundle_dir}/assets/question.png"
-MAX_EXAMS = 35
+        if getattr(sys, "frozen", False):
+            # we are running in a bundle
+            bundle_dir = sys._MEIPASS
+        else:
+            # we are running in a normal Python environment
+            bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
-curr_exam = 1
+        bundle_dir = pathlib.Path(bundle_dir).as_posix()
 
+        self.SUBMIT_ASSESSMENT_IMG = f"{bundle_dir}/assets/submit-assessment.png"
+        self.QUESTION_IMG = f"{bundle_dir}/assets/question.png"
 
-def get_soup() -> BeautifulSoup:
-    url = ""
+    def start(self):
+        solving = True
 
-    match curr_exam:
-        # Final exam modules
-        case 15:
-            url = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-1-9-answers-full.html"
-        case 16:
-            url = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-10-14-answers-full.html"
-        # Checkpoint exams
-        case 17:
-            url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-1-chapters-1-4-answers.html"
-        case 18:
-            url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-2-chapters-5-6-answers.html"
-        case 19:
-            url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-3-chapters-7-8-answers.html"
-        case 20:
-            url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-4-chapters-10-11-answers.html"
-        case 21:
-            url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-5-chapters-12-13-answers.html"
-        # Summary quizzes
-        case 22:
-            url = "https://itexamanswers.net/it-essentials-8-module-1-quiz-answers-introduction-to-personal-computer-hardware.html"
-        case 23:
-            url = "https://itexamanswers.net/it-essentials-8-module-2-quiz-answers-pc-assembly.html"
-        case 24:
-            url = "https://itexamanswers.net/it-essentials-8-module-3-quiz-answers-advanced-computer-hardware-quiz-answers.html"
-        case 25:
-            url = "https://itexamanswers.net/it-essentials-8-module-4-quiz-answers-preventive-maintenance-and-troubleshooting.html"
-        case 26:
-            url = "https://itexamanswers.net/it-essentials-8-module-5-quiz-answers-networking-concepts.html"
-        case 27:
-            url = "https://itexamanswers.net/it-essentials-8-module-6-quiz-answers-applied-networking.html"
-        case 28:
-            url = "https://itexamanswers.net/it-essentials-8-module-7-quiz-answers-laptops-and-other-mobile-devices.html"
-        case 29:
-            url = "https://itexamanswers.net/it-essentials-8-module-8-quiz-answers-printers.html"
-        case 30:
-            url = "https://itexamanswers.net/it-essentials-v7-01-chapter-9-quiz-answers.html"
-        case 31:
-            url = "https://itexamanswers.net/it-essentials-8-module-10-quiz-answers-windows-installation.html"
-        case 32:
-            url = "https://itexamanswers.net/it-essentials-8-module-11-quiz-answers-windows-configuration.html"
-        case 33:
-            url = "https://itexamanswers.net/it-essentials-8-module-12-quiz-answers-mobile-linux-and-macos-operating-systems.html"
-        case 34:
-            url = "https://itexamanswers.net/it-essentials-8-module-13-quiz-answers-security.html"
-        case 35:
-            url = "https://itexamanswers.net/it-essentials-8-module-14-quiz-answers-the-it-professional.html"
-        # Module exam
-        case _:
-            url = f"https://itexamanswers.net/it-essentials-version-8-0-chapter-{curr_exam}-exam-answers-ite-v8-0.html"
+        while solving:
+            answer = self.search_question()
+            if answer:
+                self.tick_answer(answer)
+                self.click_submit()
 
-    page = requests.get(url)
-    soup = BeautifulSoup(page.content, "lxml")
-    return soup
+                # Stop program when "Submit My Assessment" page is reached
+                try:
+                    pyscreeze.locateOnScreen(
+                        self.SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
+                    )
+                    solving = False
+                except pyscreeze.ImageNotFoundException:
+                    pass
+            elif not answer and self.curr_exam > self.MAX_EXAMS:
+                solving = False
 
+    def get_new_soup(self) -> BeautifulSoup:
+        url = ""
 
-soup = get_soup()
+        match self.curr_exam:
+            # Final exam modules
+            case 15:
+                url = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-1-9-answers-full.html"
+            case 16:
+                url = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-10-14-answers-full.html"
+            # Checkpoint exams
+            case 17:
+                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-1-chapters-1-4-answers.html"
+            case 18:
+                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-2-chapters-5-6-answers.html"
+            case 19:
+                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-3-chapters-7-8-answers.html"
+            case 20:
+                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-4-chapters-10-11-answers.html"
+            case 21:
+                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-5-chapters-12-13-answers.html"
+            # Summary quizzes
+            case 22:
+                url = "https://itexamanswers.net/it-essentials-8-module-1-quiz-answers-introduction-to-personal-computer-hardware.html"
+            case 23:
+                url = "https://itexamanswers.net/it-essentials-8-module-2-quiz-answers-pc-assembly.html"
+            case 24:
+                url = "https://itexamanswers.net/it-essentials-8-module-3-quiz-answers-advanced-computer-hardware-quiz-answers.html"
+            case 25:
+                url = "https://itexamanswers.net/it-essentials-8-module-4-quiz-answers-preventive-maintenance-and-troubleshooting.html"
+            case 26:
+                url = "https://itexamanswers.net/it-essentials-8-module-5-quiz-answers-networking-concepts.html"
+            case 27:
+                url = "https://itexamanswers.net/it-essentials-8-module-6-quiz-answers-applied-networking.html"
+            case 28:
+                url = "https://itexamanswers.net/it-essentials-8-module-7-quiz-answers-laptops-and-other-mobile-devices.html"
+            case 29:
+                url = "https://itexamanswers.net/it-essentials-8-module-8-quiz-answers-printers.html"
+            case 30:
+                url = "https://itexamanswers.net/it-essentials-v7-01-chapter-9-quiz-answers.html"
+            case 31:
+                url = "https://itexamanswers.net/it-essentials-8-module-10-quiz-answers-windows-installation.html"
+            case 32:
+                url = "https://itexamanswers.net/it-essentials-8-module-11-quiz-answers-windows-configuration.html"
+            case 33:
+                url = "https://itexamanswers.net/it-essentials-8-module-12-quiz-answers-mobile-linux-and-macos-operating-systems.html"
+            case 34:
+                url = "https://itexamanswers.net/it-essentials-8-module-13-quiz-answers-security.html"
+            case 35:
+                url = "https://itexamanswers.net/it-essentials-8-module-14-quiz-answers-the-it-professional.html"
+            # Module exam
+            case _:
+                url = f"https://itexamanswers.net/it-essentials-version-8-0-chapter-{self.curr_exam}-exam-answers-ite-v8-0.html"
 
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, "lxml")
+        return soup
 
-def click_submit():
-    """
-    Clicks the submit button
-    """
-    pg.hotkey("ctrl", "f")
-    pg.press("backspace")
-    time.sleep(0.1)
-    pg.write("Submit")
-    time.sleep(0.1)
-    pg.press("esc")
-    pg.press("enter")
+    def get_question(self) -> Optional[str]:
+        question = None
 
+        # Click on the question
+        try:
+            question_pos = pyscreeze.locateCenterOnScreen(
+                self.QUESTION_IMG, grayscale=True, confidence=0.8
+            )
 
-def get_question() -> Optional[str]:
-    question = None
+            pg.click(question_pos)
+            pg.move(1000, None)
+            pg.hotkey("ctrl", "a")
+            pg.hotkey("ctrl", "f")
+            # Needed because of a bell issue that pauses the program
+            pg.hotkey("ctrl", "f")
 
-    # Click on the question
-    try:
-        question_pos = pyscreeze.locateCenterOnScreen(
-            QUESTION_IMG, grayscale=True, confidence=0.8
-        )
+            # FIX: Cannot copy big text or paragraph
+            pg.hotkey("ctrl", "c")
 
-        pg.click(question_pos)
-        pg.move(1000, None)
-        pg.hotkey("ctrl", "a")
-        pg.hotkey("ctrl", "f")
-        # Needed because of a bell issue that pauses the program
-        pg.hotkey("ctrl", "f")
+            time.sleep(0.1)
+            pg.press("esc")
 
-        # FIX: Cannot copy big text or paragraph
-        pg.hotkey("ctrl", "c")
+            question = pyperclip.paste()
+            question = question.removeprefix("Question ")
+            first_letter_index = question.find(next(filter(str.isalpha, question)))
+            question = question[first_letter_index:]
+            question = " ".join(question.split())  # Remove extra spaces
+        except pyscreeze.ImageNotFoundException:
+            pass
 
-        time.sleep(0.1)
-        pg.press("esc")
+        return question
 
-        question = pyperclip.paste()
-        question = question.removeprefix("Question ")
-        first_letter_index = question.find(next(filter(str.isalpha, question)))
-        question = question[first_letter_index:]
-        question = " ".join(question.split())  # Remove extra spaces
-    except pyscreeze.ImageNotFoundException:
-        pass
+    def search_question(self) -> Optional[list[str]]:
+        question = self.get_question()
 
-    return question
+        # Question wasn't detected on the screen
+        if not question:
+            return None
 
+        while self.curr_exam <= self.MAX_EXAMS:
+            # Find question
+            for i in self.soup.find_all("strong"):
+                if question in i.text:
+                    # Find answer
+                    options = i.parent.find_next_sibling("ul") if i.parent else None
+                    answer = (
+                        [
+                            option.text
+                            for option in options.find_all(
+                                "li", {"class": "correct_answer"}
+                            )
+                        ]
+                        if options
+                        else None
+                    )
 
-def search_question() -> Optional[list[str]]:
-    global curr_exam, soup
-    question = get_question()
+                    return answer
 
-    # Question wasn't detected on the screen
-    if not question:
+            self.curr_exam += 1
+            self.soup = self.get_new_soup()
+
         return None
 
-    while curr_exam <= MAX_EXAMS:
-        # Find question
-        for i in soup.find_all("strong"):
-            if question in i.text:
-                # Find answer
-                options = i.parent.find_next_sibling("ul") if i.parent else None
-                answer = (
-                    [
-                        option.text
-                        for option in options.find_all(
-                            "li", {"class": "correct_answer"}
-                        )
-                    ]
-                    if options
-                    else None
-                )
+    def tick_answer(self, answer: list[str]):
+        for i in answer:
+            pg.hotkey("ctrl", "f")
+            pg.press("backspace")
+            pg.write(i)
+            time.sleep(0.5)
+            pg.hotkey("shift", "enter")
+            time.sleep(0.5)
+            pg.press("esc")
+            pg.press("enter")
+            time.sleep(0.5)
 
-                return answer
-
-        curr_exam += 1
-        soup = get_soup()
-
-    return None
-
-
-def tick_answer(answer: list[str]):
-    for i in answer:
+    def click_submit(self):
+        """
+        Clicks the submit button
+        """
         pg.hotkey("ctrl", "f")
         pg.press("backspace")
-        pg.write(i)
-        time.sleep(0.5)
-        pg.hotkey("shift", "enter")
-        time.sleep(0.5)
+        time.sleep(0.1)
+        pg.write("Submit")
+        time.sleep(0.1)
         pg.press("esc")
         pg.press("enter")
-        time.sleep(0.5)
 
 
-if __name__ == "__main__":
-    solving = True
-
-    while solving:
-        answer = search_question()
-        if answer:
-            tick_answer(answer)
-            click_submit()
-
-            # Stop program when "Submit My Assessment" page is reached
-            try:
-                pyscreeze.locateOnScreen(
-                    SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
-                )
-                solving = False
-            except pyscreeze.ImageNotFoundException:
-                pass
-        elif not answer and curr_exam > MAX_EXAMS:
-            solving = False
+solver = Solver()
+solver.start()
