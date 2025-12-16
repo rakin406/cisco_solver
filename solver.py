@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 
 class Solver:
     def __init__(self):
+        self.solving = False
         self.curr_exam = 1
         self.soup = self.get_new_soup()
         self.MAX_EXAMS = 35
@@ -30,9 +31,14 @@ class Solver:
         self.QUESTION_IMG = f"{bundle_dir}/assets/question.png"
 
     def start(self):
-        solving = True
+        """
+        Starts the solver
 
-        while solving:
+        :param self: self
+        """
+        self.solving = True
+
+        while self.solving:
             answer = self.search_question()
             if answer:
                 self.tick_answer(answer)
@@ -43,11 +49,19 @@ class Solver:
                     pyscreeze.locateOnScreen(
                         self.SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
                     )
-                    solving = False
+                    self.solving = False
                 except pyscreeze.ImageNotFoundException:
                     pass
             elif not answer and self.curr_exam > self.MAX_EXAMS:
-                solving = False
+                self.solving = False
+
+    def stop(self):
+        """
+        Stops the solver
+
+        :param self: self
+        """
+        self.solving = False
 
     def get_new_soup(self) -> BeautifulSoup:
         url = ""
@@ -192,7 +206,3 @@ class Solver:
         time.sleep(0.1)
         pg.press("esc")
         pg.press("enter")
-
-
-solver = Solver()
-solver.start()
