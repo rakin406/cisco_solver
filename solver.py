@@ -62,6 +62,8 @@ class Solver:
         :param self: self
         """
         self.solving = False
+        self.curr_exam = 1
+        self.soup = self.get_new_soup()
 
     def get_new_soup(self) -> BeautifulSoup:
         url = ""
