@@ -1,6 +1,3 @@
-import sys
-import os
-import pathlib
 import time
 from enum import Enum
 from typing import Optional
@@ -8,6 +5,10 @@ from typing import Optional
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import requests
+from bs4 import BeautifulSoup
 
 
 class ExamAnswers(Enum):
@@ -38,12 +39,17 @@ class ExamAnswers(Enum):
 class Solver:
     def __init__(self, email: str, password: str):
         self.solving = False
+        self.soup = None
 
         # Open netacad login page
         self.driver = webdriver.Chrome()
+        self.wait = WebDriverWait(self.driver, 10)
         self.driver.get("https://www.netacad.com/")
-        login_button = self.driver.find_element(
-            By.CLASS_NAME, "btn btn--ghost loginBtn--lfDa2"
+        # FIX: Invalid selector
+        login_button = self.wait.until(
+            EC.element_to_be_clickable(
+                (By.CLASS_NAME, "btn btn--ghost loginBtn--lfDa2")
+            )
         )
         login_button.click()
 
@@ -61,34 +67,29 @@ class Solver:
         course = self.driver.find_element(By.ID, "it-essentials")
         course.click()
 
-    def solve(self):
+    def solve(self, answers_link: ExamAnswers):
         """
         Starts the solver
-
-        :param self: self
         """
         self.solving = True
-        self.soup = self.get_new_soup()
+        self.soup = self.get_soup(answers_link.value)
 
-        try:
-            while self.solving:
-                answer = self.search_question()
-                if answer:
-                    self.tick_answer(answer)
-                    self.click_submit()
+        while self.solving:
+            answer = self.search_question()
+            if answer:
+                self.tick_answer(answer)
+                self.click_submit()
 
-                    # Stop program when "Submit My Assessment" page is reached
-                    try:
-                        pyscreeze.locateOnScreen(
-                            self.SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
-                        )
-                        self.stop()
-                    except pyscreeze.ImageNotFoundException:
-                        pass
-                elif not answer and self.curr_exam > self.MAX_EXAMS:
-                    self.stop()
-        except pg.FailSafeException:
-            self.stop()
+                # Stop program when "Submit My Assessment" page is reached
+                # try:
+                #     pyscreeze.locateOnScreen(
+                #         self.SUBMIT_ASSESSMENT_IMG, grayscale=True, confidence=0.8
+                #     )
+                #     self.stop()
+                # except pyscreeze.ImageNotFoundException:
+                #     pass
+            elif not answer:
+                self.stop()
 
     def stop(self):
         """
@@ -97,148 +98,68 @@ class Solver:
         :param self: self
         """
         self.solving = False
-        self.curr_exam = 1
 
-    def get_new_soup(self) -> BeautifulSoup:
-        url = ""
-
-        match self.curr_exam:
-            # Final exam modules
-            case 15:
-                url = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-1-9-answers-full.html"
-            case 16:
-                url = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-10-14-answers-full.html"
-            # Checkpoint exams
-            case 17:
-                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-1-chapters-1-4-answers.html"
-            case 18:
-                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-2-chapters-5-6-answers.html"
-            case 19:
-                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-3-chapters-7-8-answers.html"
-            case 20:
-                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-4-chapters-10-11-answers.html"
-            case 21:
-                url = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-5-chapters-12-13-answers.html"
-            # Summary quizzes
-            case 22:
-                url = "https://itexamanswers.net/it-essentials-8-module-1-quiz-answers-introduction-to-personal-computer-hardware.html"
-            case 23:
-                url = "https://itexamanswers.net/it-essentials-8-module-2-quiz-answers-pc-assembly.html"
-            case 24:
-                url = "https://itexamanswers.net/it-essentials-8-module-3-quiz-answers-advanced-computer-hardware-quiz-answers.html"
-            case 25:
-                url = "https://itexamanswers.net/it-essentials-8-module-4-quiz-answers-preventive-maintenance-and-troubleshooting.html"
-            case 26:
-                url = "https://itexamanswers.net/it-essentials-8-module-5-quiz-answers-networking-concepts.html"
-            case 27:
-                url = "https://itexamanswers.net/it-essentials-8-module-6-quiz-answers-applied-networking.html"
-            case 28:
-                url = "https://itexamanswers.net/it-essentials-8-module-7-quiz-answers-laptops-and-other-mobile-devices.html"
-            case 29:
-                url = "https://itexamanswers.net/it-essentials-8-module-8-quiz-answers-printers.html"
-            case 30:
-                url = "https://itexamanswers.net/it-essentials-v7-01-chapter-9-quiz-answers.html"
-            case 31:
-                url = "https://itexamanswers.net/it-essentials-8-module-10-quiz-answers-windows-installation.html"
-            case 32:
-                url = "https://itexamanswers.net/it-essentials-8-module-11-quiz-answers-windows-configuration.html"
-            case 33:
-                url = "https://itexamanswers.net/it-essentials-8-module-12-quiz-answers-mobile-linux-and-macos-operating-systems.html"
-            case 34:
-                url = "https://itexamanswers.net/it-essentials-8-module-13-quiz-answers-security.html"
-            case 35:
-                url = "https://itexamanswers.net/it-essentials-8-module-14-quiz-answers-the-it-professional.html"
-            # Module exam
-            case _:
-                url = f"https://itexamanswers.net/it-essentials-version-8-0-chapter-{self.curr_exam}-exam-answers-ite-v8-0.html"
-
-        page = requests.get(url)
+    def get_soup(self, answers_link: str) -> BeautifulSoup:
+        page = requests.get(answers_link)
         soup = BeautifulSoup(page.content, "lxml")
         return soup
 
-    def get_question(self) -> Optional[str]:
-        question = None
-
-        # Click on the question
-        try:
-            question_pos = pyscreeze.locateCenterOnScreen(
-                self.QUESTION_IMG, grayscale=True, confidence=0.8
-            )
-
-            pg.click(question_pos)
-            pg.move(1000, None)
-            pg.hotkey("ctrl", "a")
-            pg.hotkey("ctrl", "f")
-            # Needed because of a bell issue that pauses the program
-            pg.hotkey("ctrl", "f")
-
-            # FIX: Cannot copy big text or paragraph
-            pg.hotkey("ctrl", "c")
-
-            time.sleep(0.1)
-            pg.press("esc")
-
-            question = pyperclip.paste()
-            question = question.removeprefix("Question ")
-            first_letter_index = question.find(next(filter(str.isalpha, question)))
-            question = question[first_letter_index:]
-            question = " ".join(question.split())  # Remove extra spaces
-        except pyscreeze.ImageNotFoundException:
-            pass
-
+    def get_question(self) -> str:
+        question = self.driver.find_elements(
+            By.CLASS_NAME, "component__body-inner mcq__body-inner"
+        )[-1].text
         return question
 
     def search_question(self) -> Optional[list[str]]:
         question = self.get_question()
 
-        # Question wasn't detected on the screen
-        if not question:
+        if not self.soup:
             return None
 
-        while self.curr_exam <= self.MAX_EXAMS:
-            # Find question
-            for i in self.soup.find_all("strong"):
-                if question in i.text:
-                    # Find answer
-                    options = i.parent.find_next_sibling("ul") if i.parent else None
-                    answer = (
-                        [
-                            option.text
-                            for option in options.find_all(
-                                "li", {"class": "correct_answer"}
-                            )
-                        ]
-                        if options
-                        else None
-                    )
+        # Find question
+        for i in self.soup.find_all("strong"):
+            if question in i.text:
+                # Find answer
+                options = i.parent.find_next_sibling("ul") if i.parent else None
+                answer = (
+                    [
+                        option.text
+                        for option in options.find_all(
+                            "li", {"class": "correct_answer"}
+                        )
+                    ]
+                    if options
+                    else None
+                )
 
-                    return answer
-
-            self.curr_exam += 1
-            self.soup = self.get_new_soup()
+                return answer
 
         return None
 
     def tick_answer(self, answer: list[str]):
-        for i in answer:
-            pg.hotkey("ctrl", "f")
-            pg.press("backspace")
-            pg.write(i)
-            time.sleep(0.5)
-            pg.hotkey("shift", "enter")
-            time.sleep(0.5)
-            pg.press("esc")
-            pg.press("enter")
-            time.sleep(0.5)
+        # for i in answer:
+        # TODO: Use selenium instead
+        # pg.hotkey("ctrl", "f")
+        # pg.press("backspace")
+        # pg.write(i)
+        # time.sleep(0.5)
+        # pg.hotkey("shift", "enter")
+        # time.sleep(0.5)
+        # pg.press("esc")
+        # pg.press("enter")
+        # time.sleep(0.5)
+        pass
 
     def click_submit(self):
         """
         Clicks the submit button
         """
-        pg.hotkey("ctrl", "f")
-        pg.press("backspace")
-        time.sleep(0.1)
-        pg.write("Submit")
-        time.sleep(0.1)
-        pg.press("esc")
-        pg.press("enter")
+        # TODO: Use selenium instead
+        # pg.hotkey("ctrl", "f")
+        # pg.press("backspace")
+        # time.sleep(0.1)
+        # pg.write("Submit")
+        # time.sleep(0.1)
+        # pg.press("esc")
+        # pg.press("enter")
+        pass
