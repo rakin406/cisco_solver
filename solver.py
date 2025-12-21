@@ -2,35 +2,66 @@ import sys
 import os
 import pathlib
 import time
+from enum import Enum
 from typing import Optional
 
-import pyautogui as pg
-import pyperclip
-import pyscreeze
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+
+
+class ExamAnswers(Enum):
+    MODULE_1 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-1-exam-answers-ite-v8-0.html"
+    MODULE_2 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-2-exam-answers-ite-v8-0.html"
+    MODULE_3 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-3-exam-answers-ite-v8-0.html"
+    MODULE_4 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-4-exam-answers-ite-v8-0.html"
+    CHECKPOINT_MODULES_1_TO_4 = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-1-chapters-1-4-answers.html"
+    MODULE_5 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-5-exam-answers-ite-v8-0.html"
+    MODULE_6 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-6-exam-answers-ite-v8-0.html"
+    CHECKPOINT_MODULES_5_TO_6 = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-2-chapters-5-6-answers.html"
+    MODULE_7 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-7-exam-answers-ite-v8-0.html"
+    MODULE_8 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-8-exam-answers-ite-v8-0.html"
+    CHECKPOINT_MODULES_7_TO_8 = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-3-chapters-7-8-answers.html"
+    MODULE_9 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-9-exam-answers-ite-v8-0.html"
+    FINAL_MODULES_1_TO_9 = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-1-9-answers-full.html"
+    MODULE_10 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-10-exam-answers-ite-v8-0.html"
+    MODULE_11 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-11-exam-answers-ite-v8-0.html"
+    CHECKPOINT_MODULES_10_TO_11 = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-4-chapters-10-11-answers.html"
+    MODULE_12 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-12-exam-answers-ite-v8-0.html"
+    MODULE_13 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-13-exam-answers-ite-v8-0.html"
+    CHECKPOINT_MODULES_12_TO_13 = "https://itexamanswers.net/ite-8-0-certification-checkpoint-exam-5-chapters-12-13-answers.html"
+    MODULE_14 = "https://itexamanswers.net/it-essentials-version-8-0-chapter-14-exam-answers-ite-v8-0.html"
+    FINAL_MODULES_10_TO_14 = "https://itexamanswers.net/it-essentials-7-0-final-exam-chapters-10-14-answers-full.html"
+    IT_ESSENTIALS_FINAL = "https://itexamanswers.net/it-essentials-7-0-final-exam-composite-chapters-1-14-answers.html"
 
 
 class Solver:
-    def __init__(self):
+    def __init__(self, email: str, password: str):
         self.solving = False
-        self.curr_exam = 1
-        self.soup = self.get_new_soup()
-        self.MAX_EXAMS = 35
 
-        if getattr(sys, "frozen", False):
-            # we are running in a bundle
-            bundle_dir = sys._MEIPASS
-        else:
-            # we are running in a normal Python environment
-            bundle_dir = os.path.dirname(os.path.abspath(__file__))
+        # Open netacad login page
+        self.driver = webdriver.Chrome()
+        self.driver.get("https://www.netacad.com/")
+        login_button = self.driver.find_element(
+            By.CLASS_NAME, "btn btn--ghost loginBtn--lfDa2"
+        )
+        login_button.click()
 
-        bundle_dir = pathlib.Path(bundle_dir).as_posix()
+        # Login to netacad using user credentials
+        username_field = self.driver.find_element(By.ID, "username")
+        username_field.send_keys(email)
+        username_field.send_keys(Keys.RETURN)
+        password_field = self.driver.find_element(By.ID, "password")
+        password_field.send_keys(password)
+        password_field.send_keys(Keys.RETURN)
 
-        self.SUBMIT_ASSESSMENT_IMG = f"{bundle_dir}/assets/submit-assessment.png"
-        self.QUESTION_IMG = f"{bundle_dir}/assets/question.png"
+        # TODO: Handle invalid user credentials
 
-    def start(self):
+        # Open course
+        course = self.driver.find_element(By.ID, "it-essentials")
+        course.click()
+
+    def solve(self):
         """
         Starts the solver
 
